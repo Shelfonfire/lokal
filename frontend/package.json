@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test-api": "node test-api.js",
+    "test-env": "node test-env.js"
   },
   "dependencies": {
     "mapbox-gl": "^3.17.0",

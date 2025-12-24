@@ -8,6 +8,7 @@ import BusinessCard from './BusinessCard';
 import BusinessMarker from './BusinessMarker';
 import { getRandomIcon } from '@/utils/categoryIcons';
 import { generateRandomFeatures } from '@/utils/businessFeatures';
+import { fetchAPI } from '@/utils/api';
 
 import ExternalLinkModal from './ExternalLinkModal';
 
@@ -185,14 +186,9 @@ export default function BusinessMap({ mapboxAccessToken, searchQuery = '', mapRe
     try {
       setLoading(true);
       setError(null);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-      const response = await fetch(`${apiUrl}/businesses`);
       
-      if (!response.ok) {
-        throw new Error(`Failed to fetch businesses: ${response.statusText}`);
-      }
-      
-      const data = await response.json();
+      // Use the API helper function
+      const data = await fetchAPI('/businesses');
       setBusinesses(data);
       
       // Add dummy data
