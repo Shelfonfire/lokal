@@ -11,10 +11,29 @@ load_dotenv()
 
 app = FastAPI(title="Business API", version="1.0.0")
 
-# CORS middleware - allow requests from frontend
+# CORS configuration - allow requests from frontend
+# Supports local development and Vercel deployments
+frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
+
+# Build CORS origins list
+origins = [
+    "http://localhost:3000",  # Local development
+    "http://localhost:5173",  # Vite dev server (if using)
+]
+
+# Add production frontend URL if provided
+if frontend_url and frontend_url not in origins:
+    origins.append(frontend_url)
+
+# Add Vercel preview deployments pattern
+# Railway will handle wildcard patterns, but we'll add common patterns
+if "vercel.app" in frontend_url.lower():
+    # Extract base domain and add wildcard pattern
+    origins.append("https://*.vercel.app")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -77,4 +96,12 @@ async def root():
 @app.get("/health")
 async def health():
     return {"status": "healthy"}
+
+
+# For local development - Railway uses Procfile
+if __name__ == "__main__":
+    import uvicorn
+    # Use PORT from environment (Railway sets this) or default to 8000 for local
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
 
