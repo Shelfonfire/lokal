@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 
 interface ExternalLinkModalProps {
   isOpen: boolean;
@@ -25,7 +24,7 @@ export default function ExternalLinkModal({
         <div className="p-6">
           <h3 className="text-xl font-heading font-bold text-deep-earth-brown mb-2">Leaving Lokal</h3>
           <p className="text-deep-earth-brown/80 font-body mb-6">
-            You're leaving Lokal to visit <span className="font-semibold text-forest-green">{businessName}</span>'s {destination}. While we vet all businesses, please exercise standard online caution.
+            You&apos;re leaving Lokal to visit <span className="font-semibold text-forest-green">{businessName}</span>&apos;s {destination}. While we vet all businesses, please exercise standard online caution.
           </p>
           
           <div className="flex gap-3 justify-end">

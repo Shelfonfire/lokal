@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Map, Source, Layer, Marker, Popup } from 'react-map-gl/mapbox';
+import { Map, Source, Layer, Popup } from 'react-map-gl/mapbox';
 import type { MapRef } from 'react-map-gl/mapbox';
 import { Business } from '@/types/business';
 import BusinessCard from './BusinessCard';
@@ -24,7 +24,41 @@ interface MapInteractionHandlersProps {
   enrichedBusinesses: Business[];
   setHoveredBusinessId: (id: string | null) => void;
   hoveredBusinessId: string | null;
-  cursorLocation: { lng: number; lat: number } | null;
+  setCursorLocation: (location: { lng: number; lat: number } | null) => void;
+}
+
+// Type for Mapbox map instance (simplified interface for what we use)
+interface MapboxMapInstance {
+  loaded: () => boolean;
+  getCanvas: () => HTMLCanvasElement | null;
+  getSource: (id: string) => {
+    getClusterExpansionZoom: (clusterId: number, callback: (err: Error | null, zoom: number) => void) => void;
+  } | null;
+  queryRenderedFeatures: (point: { x: number; y: number }, options?: { layers?: string[] }) => Array<{
+    properties?: { cluster_id?: number; id?: string; name?: string };
+    geometry?: { coordinates?: [number, number] };
+  }>;
+  setPaintProperty: (layer: string, property: string, value: unknown) => void;
+  easeTo: (options: { center: [number, number]; zoom: number; duration: number }) => void;
+  on: (event: string, layerOrHandler: string | ((e: MapboxEvent) => void), handler?: (e: MapboxEvent) => void) => void;
+  off: (event: string, layerOrHandler?: string | ((e: MapboxEvent) => void), handler?: (e: MapboxEvent) => void) => void;
+  boxZoom: { disable: () => void; enable: () => void };
+  scrollZoom: { disable: () => void; enable: () => void };
+  dragPan: { disable: () => void; enable: () => void };
+  dragRotate: { disable: () => void; enable: () => void };
+  keyboard: { disable: () => void; enable: () => void };
+  doubleClickZoom: { disable: () => void; enable: () => void };
+  touchZoomRotate: { disable: () => void; enable: () => void };
+}
+
+interface MapboxEvent {
+  features?: Array<{
+    properties?: { id?: string; name?: string; cluster_id?: number };
+    geometry?: { coordinates?: [number, number] };
+  }>;
+  point?: { x: number; y: number };
+  lngLat?: { lng: number; lat: number };
+  originalEvent?: { stopPropagation?: () => void };
 }
 
 // Helper function to add dummy data to businesses
@@ -90,7 +124,7 @@ function businessesToGeoJSON(businesses: Business[]) {
 }
 
 export default function BusinessMap({ mapboxAccessToken, searchQuery = '', mapRef: externalMapRef }: BusinessMapProps) {
-  const [businesses, setBusinesses] = useState<Business[]>([]);
+  const [, setBusinesses] = useState<Business[]>([]);
   const [enrichedBusinesses, setEnrichedBusinesses] = useState<Business[]>([]);
   const [filteredBusinesses, setFilteredBusinesses] = useState<Business[]>([]);
   const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
@@ -115,7 +149,8 @@ export default function BusinessMap({ mapboxAccessToken, searchQuery = '', mapRe
     // Disable map interactions when modal opens
     const mapInstance = mapRef.current;
     if (mapInstance) {
-      const map = (mapInstance as any)._map || (mapInstance as any).getMap?.();
+      const map = ((mapInstance as unknown as { _map?: MapboxMapInstance })._map || 
+                   (mapInstance as unknown as { getMap?: () => MapboxMapInstance }).getMap?.()) as MapboxMapInstance | undefined;
       if (map) {
         map.boxZoom.disable();
         map.scrollZoom.disable();
@@ -138,7 +173,8 @@ export default function BusinessMap({ mapboxAccessToken, searchQuery = '', mapRe
     // Re-enable map interactions when modal closes
     const mapInstance = mapRef.current;
     if (mapInstance) {
-      const map = (mapInstance as any)._map || (mapInstance as any).getMap?.();
+      const map = ((mapInstance as unknown as { _map?: MapboxMapInstance })._map || 
+                   (mapInstance as unknown as { getMap?: () => MapboxMapInstance }).getMap?.()) as MapboxMapInstance | undefined;
       if (map) {
         map.boxZoom.enable();
         map.scrollZoom.enable();
@@ -158,7 +194,8 @@ export default function BusinessMap({ mapboxAccessToken, searchQuery = '', mapRe
     // Re-enable map interactions when modal closes
     const mapInstance = mapRef.current;
     if (mapInstance) {
-      const map = (mapInstance as any)._map || (mapInstance as any).getMap?.();
+      const map = ((mapInstance as unknown as { _map?: MapboxMapInstance })._map || 
+                   (mapInstance as unknown as { getMap?: () => MapboxMapInstance }).getMap?.()) as MapboxMapInstance | undefined;
       if (map) {
         map.boxZoom.enable();
         map.scrollZoom.enable();
@@ -235,12 +272,12 @@ export default function BusinessMap({ mapboxAccessToken, searchQuery = '', mapRe
     setSelectedBusiness(null);
   }, []);
 
-  // Get color based on sustainability score
-  const getMarkerColor = (score: number): string => {
-    if (score >= 90) return '#D4A574'; // golden ochre
-    if (score >= 50) return '#2D5F3F'; // forest green
-    return '#8BA888'; // sage green
-  };
+  // Get color based on sustainability score (currently unused but kept for future use)
+  // const getMarkerColor = (score: number): string => {
+  //   if (score >= 90) return '#D4A574'; // golden ochre
+  //   if (score >= 50) return '#2D5F3F'; // forest green
+  //   return '#8BA888'; // sage green
+  // };
 
   if (loading) {
     return (
@@ -288,7 +325,7 @@ export default function BusinessMap({ mapboxAccessToken, searchQuery = '', mapRe
         mapboxAccessToken={mapboxAccessToken}
         style={{ width: '100%', height: '100%' }}
         mapStyle="mapbox://styles/shelf/cmjfrqfwx001e01sdb9924le0"
-        onLoad={(e) => {
+        onLoad={() => {
           // Map loaded - set flag to allow sources to be added
           setMapLoaded(true);
         }}
@@ -363,7 +400,7 @@ export default function BusinessMap({ mapboxAccessToken, searchQuery = '', mapRe
             type="geojson"
             data={{
               type: 'FeatureCollection',
-              features: enrichedBusinesses.flatMap((business, index) => {
+              features: enrichedBusinesses.flatMap((business) => {
                 const related = business.relatedBusinesses || [];
                 return related.map((relatedName) => {
                   const relatedBusiness = enrichedBusinesses.find((b) => b.name === relatedName);
@@ -382,7 +419,7 @@ export default function BusinessMap({ mapboxAccessToken, searchQuery = '', mapRe
                       to: relatedName,
                     },
                   };
-                }).filter(Boolean) as any[];
+                }).filter((item): item is NonNullable<typeof item> => item !== null);
               }),
             }}
           >
@@ -458,7 +495,6 @@ export default function BusinessMap({ mapboxAccessToken, searchQuery = '', mapRe
           enrichedBusinesses={enrichedBusinesses}
           setHoveredBusinessId={setHoveredBusinessId}
           hoveredBusinessId={hoveredBusinessId}
-          cursorLocation={cursorLocation}
           setCursorLocation={setCursorLocation}
         />
 
@@ -552,49 +588,53 @@ function MapInteractionHandlers({
   enrichedBusinesses,
   setHoveredBusinessId,
   hoveredBusinessId,
-  cursorLocation,
   setCursorLocation,
 }: MapInteractionHandlersProps & {
-  cursorLocation: { lng: number; lat: number } | null;
   setCursorLocation: (loc: { lng: number; lat: number } | null) => void;
 }) {
   useEffect(() => {
     const mapRefInstance = mapRef.current;
     if (!mapRefInstance) return;
     
-    let map: any = null;
+    let map: MapboxMapInstance | null = null;
     let cleanup: (() => void) | null = null;
     
     // In react-map-gl, the ref gives direct access to map methods
     // We need to wait for the map to be ready
     const checkMap = () => {
-      map = (mapRefInstance as any)._map || (mapRefInstance as any).getMap?.();
+      map = ((mapRefInstance as unknown as { _map?: MapboxMapInstance })._map || 
+             (mapRefInstance as unknown as { getMap?: () => MapboxMapInstance }).getMap?.()) as MapboxMapInstance | null;
       if (!map || !map.loaded()) {
         setTimeout(checkMap, 100);
         return;
       }
-      cleanup = setupMapHandlers(map);
+      cleanup = setupMapHandlers();
     };
     
-    function setupMapHandlers(mapInstance: any): () => void {
+    function setupMapHandlers(): () => void {
+      if (!map) return () => {};
       
-      const handleMarkerClick = (e: any) => {
+      const handleMarkerClick = (e: MapboxEvent) => {
         const feature = e.features?.[0];
-        if (!feature) return;
+        if (!feature || !feature.properties) return;
         
         // Prevent event from bubbling to map click handler
-        e.originalEvent?.stopPropagation();
+        if (e.originalEvent && typeof e.originalEvent.stopPropagation === 'function') {
+          e.originalEvent.stopPropagation();
+        }
         
         const business = enrichedBusinesses.find(
-          (b) => b.name === feature.properties.name
+          (b) => b.name === feature.properties?.name
         );
         if (business) {
           onMarkerClick(business);
         }
       };
 
-      const handleMapClick = (e: any) => {
+      const handleMapClick = (e: MapboxEvent) => {
       // Close popup when clicking on map (not on markers or clusters)
+      if (!map || !e.point) return;
+      
       const features = map.queryRenderedFeatures(e.point, {
         layers: ['business-markers', 'clusters'],
       });
@@ -605,13 +645,16 @@ function MapInteractionHandlers({
       }
     };
 
-      const handleMarkerEnter = (e: any) => {
-      if (map.getCanvas()) {
-        map.getCanvas().style.cursor = 'pointer';
+      const handleMarkerEnter = (e: MapboxEvent) => {
+      if (!map) return;
+      
+      const canvas = map.getCanvas();
+      if (canvas) {
+        canvas.style.cursor = 'pointer';
       }
       const feature = e.features?.[0];
-      if (feature) {
-        setHoveredBusinessId(feature.properties.id);
+      if (feature && feature.properties) {
+        setHoveredBusinessId(feature.properties.id ?? null);
         
         // Update marker color to terracotta on hover
         map.setPaintProperty('business-markers', 'circle-color', [
@@ -631,8 +674,11 @@ function MapInteractionHandlers({
     };
 
       const handleMarkerLeave = () => {
-      if (map.getCanvas()) {
-        map.getCanvas().style.cursor = '';
+      if (!map) return;
+      
+      const canvas = map.getCanvas();
+      if (canvas) {
+        canvas.style.cursor = '';
       }
       setHoveredBusinessId(null);
       
@@ -640,25 +686,36 @@ function MapInteractionHandlers({
         map.setPaintProperty('business-markers', 'circle-color', '#8BA888');
     };
 
-      const handleClusterClick = (e: any) => {
+      const handleClusterClick = (e: MapboxEvent) => {
+      if (!map) return;
+      
       // Prevent event from bubbling to map click handler
-      e.originalEvent?.stopPropagation();
+      if (e.originalEvent && typeof e.originalEvent.stopPropagation === 'function') {
+        e.originalEvent.stopPropagation();
+      }
+      
+      if (!e.point) return;
       
       const features = map.queryRenderedFeatures(e.point, {
         layers: ['clusters'],
       });
       
-      if (features.length === 0) return;
+      if (features.length === 0 || !features[0].properties) return;
       
-      const clusterId = features[0].properties?.cluster_id;
-      const source = map.getSource('businesses') as any;
+      const clusterId = features[0].properties.cluster_id;
+      if (clusterId === undefined) return;
+      
+      const source = map.getSource('businesses');
       
       if (source && source.getClusterExpansionZoom) {
-        source.getClusterExpansionZoom(clusterId, (err: any, zoom: number) => {
-          if (err) return;
+        source.getClusterExpansionZoom(clusterId, (err: Error | null, zoom: number) => {
+          if (err || !map) return;
+          
+          const geometry = features[0]?.geometry;
+          if (!geometry || !geometry.coordinates) return;
           
           map.easeTo({
-            center: features[0].geometry.coordinates as [number, number],
+            center: geometry.coordinates as [number, number],
             zoom: zoom,
             duration: 500,
           });
@@ -666,9 +723,13 @@ function MapInteractionHandlers({
       }
     };
 
-      const handleMouseMove = (e: any) => {
-        setCursorLocation(e.lngLat);
+      const handleMouseMove = (e: MapboxEvent) => {
+        if (e.lngLat) {
+          setCursorLocation(e.lngLat);
+        }
       };
+
+      if (!map) return () => {};
 
       map.on('click', 'business-markers', handleMarkerClick);
       map.on('mouseenter', 'business-markers', handleMarkerEnter);
@@ -677,13 +738,19 @@ function MapInteractionHandlers({
       map.on('click', handleMapClick);
       map.on('mousemove', handleMouseMove);
       map.on('mouseenter', 'clusters', () => {
-        if (map.getCanvas()) {
-          map.getCanvas().style.cursor = 'pointer';
+        if (map) {
+          const canvas = map.getCanvas();
+          if (canvas) {
+            canvas.style.cursor = 'pointer';
+          }
         }
       });
       map.on('mouseleave', 'clusters', () => {
-        if (map.getCanvas()) {
-          map.getCanvas().style.cursor = '';
+        if (map) {
+          const canvas = map.getCanvas();
+          if (canvas) {
+            canvas.style.cursor = '';
+          }
         }
       });
 
@@ -717,22 +784,27 @@ function MapInteractionHandlers({
     const mapInstance = mapRef.current;
     if (!mapInstance || !hoveredBusinessId) return;
     
-    const getMap = () => {
-      return (mapInstance as any)._map || (mapInstance as any).getMap?.();
+    const getMap = (): MapboxMapInstance | undefined => {
+      return ((mapInstance as unknown as { _map?: MapboxMapInstance })._map || 
+              (mapInstance as unknown as { getMap?: () => MapboxMapInstance }).getMap?.()) as MapboxMapInstance | undefined;
     };
     
     const map = getMap();
     if (!map) return;
 
     let animationFrame: number;
-    let startTime = performance.now();
+    const startTime = performance.now();
     const duration = 2000; // 2 seconds
 
     const animate = (currentTime: number) => {
-      if (!hoveredBusinessId) {
-        map.setPaintProperty('pulse-layer', 'circle-opacity', 0);
+      if (!hoveredBusinessId || !map) {
+        if (map) {
+          map.setPaintProperty('pulse-layer', 'circle-opacity', 0);
+        }
         return;
       }
+
+      if (!map) return;
 
       const elapsed = (currentTime - startTime) % duration;
       const progress = elapsed / duration;

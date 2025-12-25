@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import type { MapRef } from 'react-map-gl/mapbox';
 
 interface LocationSearchProps {
@@ -41,7 +41,7 @@ export default function LocationSearch({
   /**
    * Fetch location suggestions from Mapbox Geocoding API
    */
-  const searchLocations = async (searchQuery: string) => {
+  const searchLocations = useCallback(async (searchQuery: string) => {
     if (!searchQuery || searchQuery.length < 2) {
       setSuggestions([]);
       return;
@@ -55,6 +55,7 @@ export default function LocationSearch({
       let center = { lng: 0.1313, lat: 52.1951 }; // Default to Cambridge, UK
       
       if (mapInstance) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const map = (mapInstance as any)._map || (mapInstance as any).getMap?.();
         if (map && map.getCenter) {
           const mapCenter = map.getCenter();
@@ -89,7 +90,7 @@ export default function LocationSearch({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [mapRef, accessToken]);
 
   // Debounced search
   useEffect(() => {
@@ -108,7 +109,7 @@ export default function LocationSearch({
         clearTimeout(debounceTimer.current);
       }
     };
-  }, [query, accessToken]);
+  }, [query, accessToken, searchLocations]);
 
   /**
    * Handle location selection
@@ -140,6 +141,7 @@ export default function LocationSearch({
     // Animate map to location
     const mapInstance = mapRef.current;
     if (mapInstance) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const map = (mapInstance as any)._map || (mapInstance as any).getMap?.();
       if (map && map.flyTo) {
         map.flyTo({

@@ -6,7 +6,7 @@ import { Business } from '@/types/business';
 
 interface BusinessMarkerProps {
   business: Business;
-  onClick: (e?: any) => void;
+  onClick: () => void;
   isHovered?: boolean;
   cursorLocation: { lng: number; lat: number } | null;
   isSelected?: boolean;
@@ -92,17 +92,17 @@ export default function BusinessMarker({ business, onClick, isHovered = false, c
 
   if (!iconSvg) return null;
 
-  const handleClick = (e?: any) => {
+  const handleClick = (e?: React.MouseEvent | { stopPropagation?: () => void; originalEvent?: { stopPropagation?: () => void }; nativeEvent?: { stopPropagation?: () => void } }) => {
     // Try to stop event propagation if the event object supports it
     if (e) {
       if (typeof e.stopPropagation === 'function') {
         e.stopPropagation();
       }
-      if (e.originalEvent && typeof e.originalEvent.stopPropagation === 'function') {
+      if ('originalEvent' in e && e.originalEvent && typeof e.originalEvent.stopPropagation === 'function') {
         e.originalEvent.stopPropagation();
       }
       // For React synthetic events
-      if (e.nativeEvent && typeof e.nativeEvent.stopPropagation === 'function') {
+      if ('nativeEvent' in e && e.nativeEvent && typeof e.nativeEvent.stopPropagation === 'function') {
         e.nativeEvent.stopPropagation();
       }
     }

@@ -1,6 +1,5 @@
 'use client';
 
-import { useRef } from 'react';
 import LocationSearch from './LocationSearch';
 import BusinessTypeSearch from './BusinessTypeSearch';
 import type { MapRef } from 'react-map-gl/mapbox';
