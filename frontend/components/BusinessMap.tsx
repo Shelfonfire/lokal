@@ -39,7 +39,7 @@ interface MapboxMapInstance {
     geometry?: { coordinates?: [number, number] };
   }>;
   setPaintProperty: (layer: string, property: string, value: unknown) => void;
-  easeTo: (options: { center: [number, number]; zoom: number; duration: number }) => void;
+  easeTo: (options: { center: [number, number]; zoom: number; duration: number; pitch?: number; bearing?: number }) => void;
   on: (event: string, layerOrHandler: string | ((e: MapboxEvent) => void), handler?: (e: MapboxEvent) => void) => void;
   off: (event: string, layerOrHandler?: string | ((e: MapboxEvent) => void), handler?: (e: MapboxEvent) => void) => void;
   boxZoom: { disable: () => void; enable: () => void };
