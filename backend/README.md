@@ -38,7 +38,17 @@ DB_PASSWORD=your-password-here
 - Provides better connection management
 - Uses pgbouncer for efficient pooling
 
-3. Make sure your Supabase database has a `businesses` table with the following columns:
+3. Configure CORS for frontend access:
+```env
+# Main production frontend URL (required for Railway deployment)
+FRONTEND_URL=https://lokal-tau.vercel.app
+
+# Additional frontend URLs (optional, comma-separated)
+# Use this for preview deployments or multiple domains
+FRONTEND_URLS=https://preview-branch.vercel.app,https://staging.example.com
+```
+
+4. Make sure your Supabase database has a `businesses` table with the following columns:
    - `name` (text)
    - `description` (text)
    - `latitude` (numeric/float)

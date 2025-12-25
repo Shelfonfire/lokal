@@ -13,30 +13,42 @@ app = FastAPI(title="Business API", version="1.0.0")
 
 # CORS configuration - allow requests from frontend
 # Supports local development and Vercel deployments
-frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
+# Environment variables:
+# - FRONTEND_URL: Main production frontend URL (e.g., https://lokal-tau.vercel.app)
+# - FRONTEND_URLS: Comma-separated list of additional frontend URLs (optional)
 
 # Build CORS origins list
 origins = [
-    "http://localhost:3000",  # Local development
+    "http://localhost:3000",  # Local development (Next.js default)
     "http://localhost:5173",  # Vite dev server (if using)
 ]
 
-# Add production frontend URL if provided
+# Add main production frontend URL
+frontend_url = os.getenv("FRONTEND_URL", "").strip()
 if frontend_url and frontend_url not in origins:
     origins.append(frontend_url)
 
-# Add Vercel preview deployments pattern
-# Railway will handle wildcard patterns, but we'll add common patterns
-if "vercel.app" in frontend_url.lower():
-    # Extract base domain and add wildcard pattern
-    origins.append("https://*.vercel.app")
+# Add additional frontend URLs if provided
+frontend_urls = os.getenv("FRONTEND_URLS", "").strip()
+if frontend_urls:
+    for url in frontend_urls.split(","):
+        url = url.strip()
+        if url and url not in origins:
+            origins.append(url)
+
+# Configure CORS middleware with proper preflight handling
+# Use regex pattern for Vercel preview deployments (allows all *.vercel.app subdomains)
+vercel_regex = r"https://.*\.vercel\.app" if frontend_url and "vercel.app" in frontend_url.lower() else None
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=origins if origins else ["*"],  # Fallback to allow all if no origins specified
+    allow_origin_regex=vercel_regex,  # Allow all Vercel preview deployments
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"],
     allow_headers=["*"],
+    expose_headers=["*"],
+    max_age=3600,  # Cache preflight requests for 1 hour
 )
 
 
