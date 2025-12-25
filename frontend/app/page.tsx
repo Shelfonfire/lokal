@@ -27,15 +27,15 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col relative bg-warm-cream">
+    <div className="relative bg-warm-cream">
       <Header 
         onSearch={setSearchQuery} 
         mapRef={mapRef}
         mapboxAccessToken={mapboxAccessToken}
       />
       
-      {/* Map Section - Hero */}
-      <main className="flex-grow w-full relative h-[85vh] mt-20"> {/* mt-20 to account for fixed header */}
+      {/* Map Section - Full Screen */}
+      <main className="w-full relative h-screen"> {/* Full viewport height */}
         <BusinessMap 
           mapboxAccessToken={mapboxAccessToken} 
           searchQuery={searchQuery}
@@ -43,8 +43,10 @@ export default function Home() {
         />
       </main>
 
-      {/* Footer - Visible on Scroll */}
-      <Footer />
+      {/* Footer - Below viewport, max 20% height when visible */}
+      <div className="min-h-[20vh] max-h-[20vh] overflow-y-auto">
+        <Footer />
+      </div>
     </div>
   );
 }

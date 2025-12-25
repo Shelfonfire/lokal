@@ -147,6 +147,7 @@ export default function LocationSearch({
         map.flyTo({
           center: coords,
           zoom: zoom,
+          pitch: 35, // Maintain 35 degree tilt
           duration: 1500,
           easing: (t: number) => t * (2 - t), // ease-out quad
           essential: true

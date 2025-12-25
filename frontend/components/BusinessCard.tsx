@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { Business } from '@/types/business';
+import BusinessFeatureBadge from './BusinessFeatureBadge';
 
 interface BusinessCardProps {
   business: Business;
@@ -29,42 +30,12 @@ export default function BusinessCard({ business, variant = 'compact', onExternal
       {/* Feature Badges - Hanging from top right */}
       {business.features && business.features.length > 0 && (
         <div className="feature-badges-container">
-          {business.features.map((feature, idx) => {
-            // Process SVG to ensure proper styling: replace currentColor with cream color
-            let processedSvg = feature.svg;
-            
-            // Replace stroke="currentColor" with explicit cream color
-            processedSvg = processedSvg.replace(/stroke="currentColor"/gi, 'stroke="#F5F1E8"');
-            processedSvg = processedSvg.replace(/stroke='currentColor'/gi, "stroke='#F5F1E8'");
-            
-            // Replace fill="currentColor" with explicit cream color (but preserve fill="none")
-            processedSvg = processedSvg.replace(/fill="currentColor"/gi, 'fill="#F5F1E8"');
-            processedSvg = processedSvg.replace(/fill='currentColor'/gi, "fill='#F5F1E8'");
-            
-            // Remove class attributes
-            processedSvg = processedSvg.replace(/\s+class="[^"]*"/g, '');
-            processedSvg = processedSvg.replace(/\s+class='[^']*'/g, '');
-            
-            // Make SVG responsive - replace fixed width/height with 100%
-            processedSvg = processedSvg.replace(/width="24"/g, 'width="100%"');
-            processedSvg = processedSvg.replace(/height="24"/g, 'height="100%"');
-            processedSvg = processedSvg.replace(/width='24'/g, "width='100%'");
-            processedSvg = processedSvg.replace(/height='24'/g, "height='100%'");
-            
-            return (
-              <div
-                key={`${feature.key}-${idx}`}
-                className="feature-badge"
-                title={feature.name}
-                aria-label={feature.name}
-              >
-                <div 
-                  className="feature-badge-icon"
-                  dangerouslySetInnerHTML={{ __html: processedSvg }}
-                />
-              </div>
-            );
-          })}
+          {business.features.map((feature, idx) => (
+            <BusinessFeatureBadge 
+              key={`${feature.key}-${idx}`} 
+              feature={feature} 
+            />
+          ))}
         </div>
       )}
 

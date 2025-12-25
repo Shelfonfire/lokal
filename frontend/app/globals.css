@@ -252,110 +252,75 @@ body {
   width: 320px;
 }
 
-/* Feature Badges Container - Top right, hanging off edge */
+/* Overhauled Business Feature Badges */
 .feature-badges-container {
   position: absolute;
-  top: 0;
-  right: 0;
+  top: -12px; /* Hang slightly off the top edge */
+  right: 12px;
   display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  justify-content: flex-end;
-  gap: 8px;
-  padding-right: 16px;
-  z-index: 100; /* Higher than card header to ensure badges render on top */
-  /* Center badges on upper edge - 50% above, 50% below */
-  transform: translateY(-50%);
+  gap: 6px;
+  z-index: 100; /* Ensure it stays above everything */
   pointer-events: none; /* Allow clicks to pass through container */
 }
 
-/* Feature Badge - Medal shape hanging from top */
-.feature-badge {
-  position: relative;
-  width: 48px;
-  height: 48px;
-  /* Medal shape: rounded bottom, flat top with small notch */
-  background: #C86B4B;
-  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+.feature-badge-overhaul {
+  width: 32px;
+  height: 32px;
+  background-color: #C86B4B; /* Rust background */
+  border-radius: 50% !important; /* Forces the 'Ball' shape */
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(200, 107, 75, 0.4);
-  border: 2px solid #C86B4B;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  /* Create medal effect with cream accent */
-  background: linear-gradient(to bottom, #C86B4B 0%, #C86B4B 60%, #F5F1E8 60%, #F5F1E8 100%);
-  z-index: 101; /* Ensure badge is above card header */
-  pointer-events: auto; /* Re-enable pointer events for the badge itself */
-  isolation: isolate; /* Create new stacking context */
+  padding: 6px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: 1.5px solid #F5F1E8; /* Clean cream border */
+  overflow: visible;
+  transition: transform 0.2s ease;
+  pointer-events: auto; /* Re-enable interaction for individual badges */
 }
 
-/* Add ribbon/loop at top for hanging effect */
-.feature-badge::before {
-  content: '';
-  position: absolute;
-  top: -6px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 12px;
-  height: 8px;
-  background: #C86B4B;
-  border-radius: 2px 2px 0 0;
-  z-index: -1;
+.feature-badge-overhaul:hover {
+  transform: translateY(-2px);
 }
 
-.feature-badge:hover {
-  transform: scale(1.1);
-  box-shadow: 0 6px 16px rgba(200, 107, 75, 0.5);
-}
-
-.feature-badge-icon {
-  width: 24px;
-  height: 24px;
+.feature-badge-icon-wrapper {
+  width: 20px;
+  height: 20px;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #F5F1E8;
 }
 
-.feature-badge-icon svg {
+.feature-badge-icon-wrapper svg {
+  display: block;
   width: 100%;
   height: 100%;
-  display: block;
-  color: #F5F1E8;
+  fill: none !important; /* Force icons to be outlines only */
 }
 
-/* Ensure SVG paths and other elements inherit the color */
-.feature-badge-icon svg path,
-.feature-badge-icon svg circle,
-.feature-badge-icon svg rect,
-.feature-badge-icon svg line,
-.feature-badge-icon svg polyline,
-.feature-badge-icon svg polygon {
+.feature-badge-icon-wrapper svg path,
+.feature-badge-icon-wrapper svg circle,
+.feature-badge-icon-wrapper svg rect,
+.feature-badge-icon-wrapper svg line,
+.feature-badge-icon-wrapper svg polyline,
+.feature-badge-icon-wrapper svg polygon {
+  fill: none !important;
   stroke: #F5F1E8 !important;
 }
 
-/* Only apply fill if not explicitly set to "none" */
-.feature-badge-icon svg path:not([fill="none"]):not([fill='none']),
-.feature-badge-icon svg circle:not([fill="none"]):not([fill='none']),
-.feature-badge-icon svg rect:not([fill="none"]):not([fill='none']) {
-  fill: #F5F1E8 !important;
-}
-
 /* Compact variant adjustments */
-.business-card.compact .feature-badge {
-  width: 40px;
-  height: 40px;
+.business-card.compact .feature-badge-overhaul {
+  width: 28px;
+  height: 28px;
+  padding: 5px;
 }
 
-.business-card.compact .feature-badge-icon {
-  width: 20px;
-  height: 20px;
+.business-card.compact .feature-badge-icon-wrapper {
+  width: 18px;
+  height: 18px;
 }
 
 .business-card.compact .feature-badges-container {
-  padding-right: 12px;
-  gap: 6px;
+  top: -10px; /* Slightly less hang for compact variant */
+  gap: 5px;
 }
 
 /* Verified Badge */
@@ -393,6 +358,7 @@ body {
   display: flex;
   align-items: flex-end;
   z-index: 1; /* Lower than feature badges */
+  overflow: visible; /* Ensure badges aren't clipped */
 }
 
 .business-card.compact .card-header {
@@ -421,6 +387,8 @@ body {
   padding: 24px;
   position: relative;
   z-index: 1; /* Lower than feature badges */
+  background-color: #FCF8F0; /* Explicit background to prevent bleeding */
+  /* Ensure no overflow:hidden here that might clip the badges */
 }
 
 .business-card.compact .card-content {

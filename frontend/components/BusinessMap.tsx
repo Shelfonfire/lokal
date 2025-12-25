@@ -209,11 +209,16 @@ export default function BusinessMap({ mapboxAccessToken, searchQuery = '', mapRe
   };
 
   // Map center: 52.1951° N, 0.1313° E
-  const [viewState, setViewState] = useState({
+  // Initial view state with Cambridge coordinates, zoom 13, and 35 degree pitch
+  const initialViewState = {
     longitude: 0.1313,
     latitude: 52.1951,
-    zoom: 12,
-  });
+    zoom: 13, // Default zoom level
+    pitch: 35, // 35 degree vertical tilt
+    bearing: 0, // North-up orientation
+  };
+  
+  const [viewState, setViewState] = useState(initialViewState);
 
   useEffect(() => {
     fetchBusinesses();
@@ -237,7 +242,9 @@ export default function BusinessMap({ mapboxAccessToken, searchQuery = '', mapRe
       setViewState({
         longitude: 0.1313,
         latitude: 52.1951,
-        zoom: 12,
+        zoom: 13, // Default zoom level
+        pitch: 35, // 35 degree vertical tilt
+        bearing: 0, // North-up orientation
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch businesses');
@@ -313,6 +320,7 @@ export default function BusinessMap({ mapboxAccessToken, searchQuery = '', mapRe
     <div className="w-full h-full relative">
       <Map
         ref={mapRef}
+        initialViewState={initialViewState}
         {...viewState}
         onMove={(evt) => {
           // Disable map movement when modal is open
@@ -328,6 +336,21 @@ export default function BusinessMap({ mapboxAccessToken, searchQuery = '', mapRe
         onLoad={() => {
           // Map loaded - set flag to allow sources to be added
           setMapLoaded(true);
+          // Ensure the map uses our viewState settings after load
+          const mapInstance = mapRef.current;
+          if (mapInstance) {
+            const map = ((mapInstance as unknown as { _map?: MapboxMapInstance })._map || 
+                         (mapInstance as unknown as { getMap?: () => MapboxMapInstance }).getMap?.()) as MapboxMapInstance | undefined;
+            if (map) {
+              map.easeTo({
+                center: [viewState.longitude, viewState.latitude],
+                zoom: viewState.zoom,
+                pitch: viewState.pitch,
+                bearing: viewState.bearing,
+                duration: 0, // Instant update
+              });
+            }
+          }
         }}
       >
         {/* Only render sources after map is loaded */}
@@ -717,6 +740,7 @@ function MapInteractionHandlers({
           map.easeTo({
             center: geometry.coordinates as [number, number],
             zoom: zoom,
+            pitch: 35, // Maintain 35 degree tilt
             duration: 500,
           });
         });
