@@ -1,22 +1,16 @@
 import { BusinessFeature } from '@/utils/businessFeatures';
 
 export interface Business {
+  id?: number;
   name: string;
-  description: string;
+  description?: string;
   latitude: number;
   longitude: number;
-  // Dummy data fields (hardcoded for now)
-  sustainabilityScore?: number; // 0-100
   category?: string;
+  categorySvg?: string;
   logo?: string; // URL to business logo
-  icon?: string; // SVG icon for map marker
+  icon?: string; // SVG icon for map marker (assigned client-side)
   isVerified?: boolean; // Verified business badge
-  impactMetrics?: {
-    carbonSaved?: string;
-    localSourcing?: string;
-    wasteReduction?: string;
-    renewableEnergy?: string;
-  };
   socialLinks?: {
     website?: string;
     facebook?: string;
@@ -24,13 +18,21 @@ export interface Business {
     twitter?: string;
     tiktok?: string;
   };
-  relatedBusinesses?: string[]; // Array of business names for connections
-  features?: BusinessFeature[]; // Business features with icons
+  features?: BusinessFeature[]; // Business features with icons from database
   openingHours?: {
     day: string;
     start: string;
     end: string;
   }[];
+  // Legacy fields (kept for backward compatibility, not used with new schema)
+  sustainabilityScore?: number; // 0-100
+  impactMetrics?: {
+    carbonSaved?: string;
+    localSourcing?: string;
+    wasteReduction?: string;
+    renewableEnergy?: string;
+  };
+  relatedBusinesses?: string[]; // Array of business names for connections
 }
 
 

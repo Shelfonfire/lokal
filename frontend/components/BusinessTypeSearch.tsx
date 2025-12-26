@@ -19,17 +19,17 @@ export default function BusinessTypeSearch({
 
   // Update filtered categories when query changes
   useEffect(() => {
-    if (query.length > 0) {
-      const filtered = getFilteredCategories(query);
+    const updateCategories = async () => {
+      const filtered = await getFilteredCategories(query);
       // Limit to 5 results, already sorted alphabetically
       setFilteredCategories(filtered.slice(0, 5));
-      setShowSuggestions(true);
-    } else {
-      // Show top 5 categories alphabetically when input is empty
-      const allCategories = getFilteredCategories('');
-      setFilteredCategories(allCategories.slice(0, 5));
-      setShowSuggestions(false);
-    }
+      if (query.length > 0) {
+        setShowSuggestions(true);
+      } else {
+        setShowSuggestions(false);
+      }
+    };
+    updateCategories();
   }, [query]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -1,43 +1,65 @@
 /**
- * Business Categories Cache
+ * Business Categories - Fetched from API
  * 
- * This file contains the list of business categories used for filtering.
- * Update this list periodically as the database of business categories expands.
+ * This file fetches business categories from the backend API.
  */
 
-export const businessCategories = [
-  'Arts & Crafts',
-  'Automotive',
-  'Beauty & Wellness',
-  'Education',
-  'Entertainment',
-  'Fashion & Apparel',
-  'Finance',
-  'Food & Beverage',
-  'Healthcare',
-  'Home & Garden',
-  'Hospitality',
-  'Legal Services',
-  'Manufacturing',
-  'Pet Services',
-  'Real Estate',
-  'Retail',
-  'Services',
-  'Sports & Recreation',
-  'Technology',
-  'Transportation',
-].sort(); // Sort alphabetically
+import { fetchAPI } from '@/utils/api';
+
+export interface Category {
+  id: number;
+  category: string;
+  description?: string;
+  svg?: string;
+}
+
+let categoriesCache: Category[] | null = null;
+
+/**
+ * Fetch categories from the API
+ */
+export async function fetchCategories(): Promise<Category[]> {
+  if (categoriesCache) {
+    return categoriesCache;
+  }
+  
+  try {
+    const data = await fetchAPI('/categories');
+    categoriesCache = data;
+    return data;
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+    return [];
+  }
+}
+
+/**
+ * Get category names as a simple string array
+ */
+export async function getBusinessCategories(): Promise<string[]> {
+  const categories = await fetchCategories();
+  return categories.map(cat => cat.category).sort();
+}
 
 /**
  * Get filtered categories based on search query
  */
-export function getFilteredCategories(query: string): string[] {
-  if (!query) return businessCategories;
+export async function getFilteredCategories(query: string): Promise<string[]> {
+  const categories = await getBusinessCategories();
+  
+  if (!query) return categories;
   
   const lowerQuery = query.toLowerCase();
-  return businessCategories.filter(category =>
+  return categories.filter(category =>
     category.toLowerCase().includes(lowerQuery)
   );
+}
+
+/**
+ * Clear the categories cache (useful for testing or refresh)
+ */
+export function clearCategoriesCache(): void {
+  categoriesCache = null;
 }
 
 

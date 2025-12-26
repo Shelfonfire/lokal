@@ -7,7 +7,6 @@ import { Business } from '@/types/business';
 import BusinessCard from './BusinessCard';
 import BusinessMarker from './BusinessMarker';
 import { getRandomIcon } from '@/utils/categoryIcons';
-import { generateRandomFeatures } from '@/utils/businessFeatures';
 import { fetchAPI } from '@/utils/api';
 
 import ExternalLinkModal from './ExternalLinkModal';
@@ -61,42 +60,11 @@ interface MapboxEvent {
   originalEvent?: { stopPropagation?: () => void };
 }
 
-// Helper function to add dummy data to businesses
+// Helper function to enrich businesses with icon (categories and features come from API)
 function enrichBusinessData(businesses: Business[]): Business[] {
-  const categories = ['Food & Beverage', 'Retail', 'Services', 'Manufacturing', 'Technology'];
-  const carbonSavedOptions = ['1.2 tons', '2.5 tons', '3.8 tons', '1.8 tons', '2.1 tons'];
-  const localSourcingOptions = ['85%', '92%', '100%', '78%', '95%'];
-  const wasteReductionOptions = ['75%', '85%', '90%', '80%', '88%'];
-  const renewableEnergyOptions = ['95%', '100%', '85%', '90%', '100%'];
-  
-  return businesses.map((business, index) => ({
+  return businesses.map((business) => ({
     ...business,
-    category: categories[index % categories.length],
-    icon: getRandomIcon(), // Assign random icon for now
-    isVerified: index % 3 !== 0, // Most businesses verified
-    impactMetrics: {
-      carbonSaved: carbonSavedOptions[index % carbonSavedOptions.length],
-      localSourcing: localSourcingOptions[index % localSourcingOptions.length],
-      wasteReduction: wasteReductionOptions[index % wasteReductionOptions.length],
-      renewableEnergy: renewableEnergyOptions[index % renewableEnergyOptions.length],
-    },
-    socialLinks: {
-      website: `https://${business.name.toLowerCase().replace(/\s+/g, '')}.example.com`,
-      facebook: index % 2 === 0 ? `https://facebook.com/${business.name.toLowerCase().replace(/\s+/g, '')}` : undefined,
-      instagram: `https://instagram.com/${business.name.toLowerCase().replace(/\s+/g, '')}`,
-      twitter: index % 3 === 0 ? `https://x.com/${business.name.toLowerCase().replace(/\s+/g, '')}` : undefined,
-      tiktok: index % 4 === 0 ? `https://tiktok.com/@${business.name.toLowerCase().replace(/\s+/g, '')}` : undefined,
-    },
-    relatedBusinesses: index < businesses.length - 1 ? [businesses[index + 1].name] : [],
-    features: generateRandomFeatures(index), // Generate 1-2 random features per business
-    openingHours: [
-      { day: 'Monday', start: '9:00', end: '17:00' },
-      { day: 'Tuesday', start: '9:00', end: '17:00' },
-      { day: 'Wednesday', start: '9:00', end: '17:00' },
-      { day: 'Thursday', start: '9:00', end: '17:00' },
-      { day: 'Friday', start: '9:00', end: '17:00' },
-      { day: 'Saturday', start: '10:00', end: '15:00' },
-    ],
+    icon: getRandomIcon(), // Assign random icon for now (could use category_svg in future)
   }));
 }
 
@@ -229,11 +197,11 @@ export default function BusinessMap({ mapboxAccessToken, searchQuery = '', mapRe
       setLoading(true);
       setError(null);
       
-      // Use the API helper function
+      // Use the API helper function to fetch businesses with all related data
       const data = await fetchAPI('/businesses');
       setBusinesses(data);
       
-      // Add dummy data
+      // Enrich with icons (categories and features already come from API)
       const enriched = enrichBusinessData(data);
       setEnrichedBusinesses(enriched);
       setFilteredBusinesses(enriched);
