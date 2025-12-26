@@ -60,11 +60,12 @@ interface MapboxEvent {
   originalEvent?: { stopPropagation?: () => void };
 }
 
-// Helper function to enrich businesses with icon (categories and features come from API)
+// Helper function to enrich businesses with icon from database SVG
 function enrichBusinessData(businesses: Business[]): Business[] {
   return businesses.map((business) => ({
     ...business,
-    icon: getRandomIcon(), // Assign random icon for now (could use category_svg in future)
+    // Use category SVG from database, fallback to random icon if not available
+    icon: business.categorySvg || getRandomIcon(),
   }));
 }
 
