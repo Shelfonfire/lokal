@@ -127,3 +127,4 @@ If you still see CORS errors:
 - Vercel preview deployments are automatically allowed via regex pattern
 - All HTTP methods and headers are allowed (you can restrict these if needed for security)
 
+
