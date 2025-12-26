@@ -6,7 +6,6 @@ import os
 from dotenv import load_dotenv
 from psycopg2.extras import RealDictCursor
 from database import get_db_connection
-import json
 
 load_dotenv()
 
@@ -126,6 +125,7 @@ def get_businesses():
                         bc.category,
                         bc.svg as category_svg,
                         bl.location_name,
+                        bl.location_index,
                         ST_Y(bl.location::geometry) as latitude,
                         ST_X(bl.location::geometry) as longitude
                     FROM businesses b
@@ -263,6 +263,14 @@ def get_businesses():
                     if business_data["latitude"] is None or business_data["longitude"] is None:
                         continue  # Skip businesses without valid location
                     
+                    # Build social links object if business has social links
+                    social_links_obj = None
+                    if business_id in social_by_business:
+                        social_data = social_by_business[business_id]
+                        # Only create SocialLinks if at least one field is not None
+                        if social_data and any(v is not None for v in social_data.values()):
+                            social_links_obj = SocialLinks(**social_data)
+                    
                     business = Business(
                         id=business_data["id"],
                         name=business_data["name"],
@@ -274,7 +282,7 @@ def get_businesses():
                         isVerified=business_data["is_verified"],
                         logo=logos_by_business.get(business_id),
                         features=features_by_business.get(business_id, []),
-                        socialLinks=SocialLinks(**social_by_business[business_id]) if business_id in social_by_business else None,
+                        socialLinks=social_links_obj,
                         openingHours=hours_by_business.get(business_id, [])
                     )
                     businesses.append(business)
